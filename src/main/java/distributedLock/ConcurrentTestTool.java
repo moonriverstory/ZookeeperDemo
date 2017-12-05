@@ -66,6 +66,8 @@ public class ConcurrentTestTool {
                     } catch (Exception e) {
                         err.getAndIncrement();//相当于err++
                     }
+                    //运行完毕，计数减1
+                    doneSignal.countDown();
                 }
             }).start();
         }
@@ -86,10 +88,10 @@ public class ConcurrentTestTool {
             sum += t;
         }
         long avg = sum / size;
-        LOGGER.info("min: " + min);
-        LOGGER.info("max: " + max);
-        LOGGER.info("avg: " + avg);
-        LOGGER.info("err: " + err.get());
+        LOGGER.info("ExeTime min: " + min);
+        LOGGER.info("ExeTime max: " + max);
+        LOGGER.info("ExeTime avg: " + avg);
+        LOGGER.info("Exe err: " + err.get());
     }
 
     public interface ConcurrentTask {
