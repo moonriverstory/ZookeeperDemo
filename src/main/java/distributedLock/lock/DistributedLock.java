@@ -75,7 +75,7 @@ public class DistributedLock implements Lock, Watcher {
         }
         try {
             if (this.tryLock()) {
-                LOGGER.info("Thread " + Thread.currentThread().getId() + " " + myZnode + " get lock true");
+                LOGGER.info(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " " + myZnode + " get lock true");
                 return;
             } else {
                 waitForLock(waitNode, sessionTimeout);//等待锁
@@ -92,7 +92,7 @@ public class DistributedLock implements Lock, Watcher {
         Stat stat = zk.exists(root + "/" + lower, true);
         //判断比自己小一个数的节点是否存在,如果不存在则无需等待锁,同时注册监听
         if (stat != null) {
-            LOGGER.info("Thread " + Thread.currentThread().getId() + " waiting for " + root + "/" + lower);
+            LOGGER.info(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " waiting for " + root + "/" + lower);
             this.latch = new CountDownLatch(1);
             this.latch.await(waitTime, TimeUnit.MILLISECONDS);
             this.latch = null;
@@ -136,7 +136,7 @@ public class DistributedLock implements Lock, Watcher {
                 }
             }
             Collections.sort(lockObjects);
-            LOGGER.info(Thread.currentThread().getName() + " 的锁是 " + myZnode + "==" + lockObjects.get(0));
+            LOGGER.info(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " 的锁是 " + myZnode + "==" + lockObjects.get(0));
             // 若当前节点为最小节点，则获取锁成功
             if (myZnode.equals(root + "/" + lockObjects.get(0))) {
                 //如果是最小的节点,则表示取得锁

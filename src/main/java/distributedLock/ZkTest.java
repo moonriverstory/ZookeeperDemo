@@ -19,7 +19,7 @@ public class ZkTest {
                     lock = new DistributedLock("106.14.5.254:2191", "test1");
                     lock.lock();
                     Thread.sleep(3000);
-                    LOGGER.info("===Thread " + Thread.currentThread().getId() + " running");
+                    LOGGER.info("task1: " + Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " running");
                 } catch (Exception e) {
                     e.printStackTrace();
                 } finally {
@@ -39,15 +39,15 @@ public class ZkTest {
 
         ConcurrentTask[] tasks = new ConcurrentTask[10];
         for (int i = 0; i < tasks.length; i++) {
-            ConcurrentTask task3 = new ConcurrentTask() {
+            ConcurrentTask taskI = new ConcurrentTask() {
 
                 @Override
                 public void run() {
                     DistributedLock lock = null;
                     try {
-                        lock = new DistributedLock("106.14.5.254:2192","test2");
+                        lock = new DistributedLock("106.14.5.254:2192", "test2");
                         lock.lock();
-                        LOGGER.info("Thread " + Thread.currentThread().getId() + " running");
+                        LOGGER.info("taskI: " + Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " running");
                     } catch (Exception e) {
                         e.printStackTrace();
                     } finally {
@@ -55,7 +55,7 @@ public class ZkTest {
                     }
                 }
             };
-            tasks[i] = task3;
+            tasks[i] = taskI;
         }
 
         new ConcurrentTestTool(tasks);
