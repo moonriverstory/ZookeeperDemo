@@ -22,14 +22,38 @@ public class DistributedLock implements Lock, Watcher {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DistributedLock.class);
 
+    /**
+     * zk连接对象
+     */
     private ZooKeeper zk;
-    private String root = "/locks";//根
-    private String lockName;//竞争资源的标志
-    private String waitNode;//等待前一个锁
-    private String myZnode;//当前锁
-    private CountDownLatch latch;//计数器
+    /**
+     * 根
+     */
+    private String root = "/locks";
+    /**
+     * 竞争资源的标志
+     */
+    private String lockName;
+    /**
+     * 等待前一个锁
+     */
+    private String waitNode;
+    /**
+     * 当前锁
+     */
+    private String myZnode;
+    /**
+     * 计数器
+     */
+    private CountDownLatch latch;
+    /**
+     * zk session超时时间
+     */
     private int sessionTimeout = 30000;
-    private List<Exception> exception = new ArrayList<Exception>();
+    /**
+     * 记录zk lock初始化错误
+     */
+    private List<Exception> initException = new ArrayList<Exception>();
 
     /**
      * 创建分布式锁,使用前请确认config配置的zookeeper服务可用
@@ -48,11 +72,11 @@ public class DistributedLock implements Lock, Watcher {
                 zk.create(root, new byte[0], ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.PERSISTENT);
             }
         } catch (IOException e) {
-            exception.add(e);
+            initException.add(e);
         } catch (KeeperException e) {
-            exception.add(e);
+            initException.add(e);
         } catch (InterruptedException e) {
-            exception.add(e);
+            initException.add(e);
         }
     }
 
@@ -68,17 +92,21 @@ public class DistributedLock implements Lock, Watcher {
         }
     }
 
+    /**
+     * 加锁
+     */
     @Override
     public void lock() {
-        if (exception.size() > 0) {
-            throw new LockException(exception.get(0));
+        if (initException.size() > 0) {
+            //zk初始化失败，不能加锁，抛异常
+            throw new LockException(initException.get(0));
         }
         try {
             if (this.tryLock()) {
-                LOGGER.info(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " " + myZnode + " get lock true");
+                LOGGER.debug(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " " + myZnode + " get lock true");
                 return;
             } else {
-                waitForLock(waitNode, sessionTimeout);//等待锁
+                waitForLock(waitNode, sessionTimeout);//等待锁，直到zk session超时
             }
 
         } catch (KeeperException e) {
@@ -88,32 +116,28 @@ public class DistributedLock implements Lock, Watcher {
         }
     }
 
-    private boolean waitForLock(String lower, long waitTime) throws InterruptedException, KeeperException {
-        Stat stat = zk.exists(root + "/" + lower, true);
-        //判断比自己小一个数的节点是否存在,如果不存在则无需等待锁,同时注册监听
-        if (stat != null) {
-            LOGGER.info(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " waiting for " + root + "/" + lower);
-            this.latch = new CountDownLatch(1);
-            this.latch.await(waitTime, TimeUnit.MILLISECONDS);
-            this.latch = null;
-        }
-        return true;
-    }
-
+    /**
+     * 解锁
+     */
     @Override
     public void unlock() {
         try {
-            LOGGER.info("unlock " + myZnode);
+            LOGGER.debug("unlock " + myZnode);
             zk.delete(myZnode, -1);
             myZnode = null;
             zk.close();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            throw new LockException(e);
         } catch (KeeperException e) {
-            e.printStackTrace();
+            throw new LockException(e);
         }
     }
 
+    /**
+     * 尝试加锁(CORE方法)
+     *
+     * @return
+     */
     @Override
     public boolean tryLock() {
         try {
@@ -124,7 +148,7 @@ public class DistributedLock implements Lock, Watcher {
             // 创建临时有序节点
             myZnode = zk.create(root + "/" + lockName + splitStr, new byte[0],
                     ZooDefs.Ids.OPEN_ACL_UNSAFE, CreateMode.EPHEMERAL_SEQUENTIAL);
-            LOGGER.info(myZnode + " 已经创建");
+            LOGGER.debug(myZnode + " 已经创建");
             // 取所有子节点
             List<String> subNodes = zk.getChildren(root, false);
             // 取出所有lockName的锁
@@ -136,7 +160,7 @@ public class DistributedLock implements Lock, Watcher {
                 }
             }
             Collections.sort(lockObjects);
-            LOGGER.info(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " 的锁是 " + myZnode + "==" + lockObjects.get(0));
+            LOGGER.debug(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " 的锁是 " + myZnode + "==" + lockObjects.get(0));
             // 若当前节点为最小节点，则获取锁成功
             if (myZnode.equals(root + "/" + lockObjects.get(0))) {
                 //如果是最小的节点,则表示取得锁
@@ -154,6 +178,37 @@ public class DistributedLock implements Lock, Watcher {
         return false;
     }
 
+    /**
+     * 等待锁释放
+     *
+     * @param lower
+     * @param waitTime
+     * @return
+     * @throws InterruptedException
+     * @throws KeeperException
+     */
+    private boolean waitForLock(String lower, long waitTime) throws InterruptedException, KeeperException {
+        //判断比自己小一个数的节点是否存在,如果不存在则无需等待锁,同时注册监听
+        Stat stat = zk.exists(root + "/" + lower, true);
+        if (stat != null) {
+            LOGGER.debug(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " waiting for " + root + "/" + lower);
+            this.latch = new CountDownLatch(1);
+            //等待一定时间waitTime
+            this.latch.await(waitTime, TimeUnit.MILLISECONDS);
+            //超时返回后，清除阀门(在这里用做 锁 释放)
+            this.latch = null;
+        }
+        return true;
+    }
+
+
+    /**
+     * 尝试加锁，超时返回false
+     *
+     * @param timeout
+     * @param unit
+     * @return
+     */
     @Override
     public boolean tryLock(long timeout, TimeUnit unit) {
         try {
@@ -162,7 +217,7 @@ public class DistributedLock implements Lock, Watcher {
             }
             return waitForLock(waitNode, timeout);
         } catch (Exception e) {
-            e.printStackTrace();
+            LOGGER.debug("tryLock fail: ", e);
         }
         return false;
     }
@@ -172,7 +227,7 @@ public class DistributedLock implements Lock, Watcher {
         this.lock();
     }
 
-
+    //没用到
     @Override
     public Condition newCondition() {
         return null;

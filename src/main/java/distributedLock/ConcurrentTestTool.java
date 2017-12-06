@@ -16,34 +16,53 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ConcurrentTestTool {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ConcurrentTestTool.class);
-    
-    private CountDownLatch startSignal = new CountDownLatch(1);//开始阀门
-    private CountDownLatch doneSignal = null;//结束阀门
-    private CopyOnWriteArrayList<Long> list = new CopyOnWriteArrayList<Long>();
-    private AtomicInteger err = new AtomicInteger();//原子递增
+    /**
+     * 开始阀门
+     */
+    private CountDownLatch startSignal = new CountDownLatch(1);
+    /**
+     * 结束阀门
+     */
+    private CountDownLatch doneSignal = null;
+    /**
+     * 线程执行花费时间list
+     */
+    private CopyOnWriteArrayList<Long> exeTimeList = new CopyOnWriteArrayList<Long>();
+    /**
+     * 错误计数，原子递增
+     */
+    private AtomicInteger err = new AtomicInteger();
+    /**
+     * 要并行运行的tasks
+     */
     private ConcurrentTask[] task = null;
 
     public ConcurrentTestTool(ConcurrentTask... task) {
         this.task = task;
         if (task == null) {
-            LOGGER.info("task can not null");
+            LOGGER.error("task can not be null");
             System.exit(1);
         }
+        //倒数，初始化结束门阀
         doneSignal = new CountDownLatch(task.length);
         start();
     }
 
+    /**
+     * 启动tasks
+     */
     private void start() {
         //创建线程，并将所有线程等待在阀门处
         createThread();
-        //打开阀门
-        startSignal.countDown();//递减锁存器的计数，如果计数到达零，则释放所有等待的线程
+        //打开阀门，开始执行所有tasks
+        startSignal.countDown();
         try {
-            doneSignal.await();//等待所有线程都执行完毕
+            //等待所有线程都执行完毕
+            doneSignal.await();
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            LOGGER.error("start wait error: ", e);
         }
-        //计算执行时间
+        //执行完毕，计算并打印执行时间
         getExeTime();
     }
 
@@ -58,11 +77,12 @@ public class ConcurrentTestTool {
                 @Override
                 public void run() {
                     try {
-                        startSignal.await();//使当前线程在锁存器倒计数至零之前一直等待
+                        //使当前线程在锁存器倒计数至零之前一直等待
+                        startSignal.await();
                         long start = System.currentTimeMillis();
                         task[j].run();
                         long end = (System.currentTimeMillis() - start);
-                        list.add(end);
+                        exeTimeList.add(end);
                     } catch (Exception e) {
                         err.getAndIncrement();//相当于err++
                     }
@@ -77,9 +97,9 @@ public class ConcurrentTestTool {
      * 计算平均响应时间
      */
     private void getExeTime() {
-        int size = list.size();
+        int size = exeTimeList.size();
         List<Long> _list = new ArrayList<Long>(size);
-        _list.addAll(list);
+        _list.addAll(exeTimeList);
         Collections.sort(_list);
         long min = _list.get(0);
         long max = _list.get(size - 1);
@@ -94,7 +114,9 @@ public class ConcurrentTestTool {
         LOGGER.info("Exe err: " + err.get());
     }
 
+    //内部接口
     public interface ConcurrentTask {
+        //在实现里面加 分布锁
         void run();
     }
 }
