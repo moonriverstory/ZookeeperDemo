@@ -111,6 +111,10 @@ public class DistributedLock implements Lock, Watcher {
                 LOGGER.debug(Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " " + currNode + " 获得锁~");
                 return;
             } else {
+                //这里的waitTime很有意义，就是分布式锁队列等待的最大时间
+                //如果超时，锁释放，整个队列余下的未执行完的线程都会继续运行
+                //所以，超时问题很严重，这限制了分布式锁的队列长度。
+                //大型应用，这里一定要更好的的设置等待队列=。=
                 waitForLock(waitPrevNode, sessionTimeout);//挂起线程，等待锁，直到zk session超时
             }
 

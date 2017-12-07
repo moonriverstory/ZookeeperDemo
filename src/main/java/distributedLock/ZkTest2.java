@@ -87,7 +87,7 @@ public class ZkTest2 {
                             try {
                                 lock = new DistributedLock(ZK3_CONFIG, "test2");
                                 lock.lock();
-                                Thread.sleep(50);
+                                Thread.sleep(100);
                                 LOGGER.info("task3: " + Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " running");
                             } catch (Exception e) {
                                 e.printStackTrace();
