@@ -5,13 +5,15 @@ import distributedLock.ConcurrentTestTool.ConcurrentTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ZkTest {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZkTest.class);
+public class ZkTest1 {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZkTest1.class);
 
     private static final String ZK1_CONFIG = "106.14.5.254:2191";
 
     private static final String ZK2_CONFIG = "106.14.5.254:2192";
+
 
     public static void main(String[] args) {
         Runnable task1 = new Runnable() {
@@ -22,7 +24,7 @@ public class ZkTest {
                 try {
                     lock = new DistributedLock(ZK1_CONFIG, "test1");
                     lock.lock();
-                    Thread.sleep(3000);
+                    Thread.sleep(1500);
                     LOGGER.info("task1: " + Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " running");
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -36,7 +38,7 @@ public class ZkTest {
 
         new Thread(task1).start();
 
-        //主线程等待1s，用来等待zk1和zk2的同步
+        //主线程等待1s
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e1) {
@@ -53,6 +55,7 @@ public class ZkTest {
                     try {
                         lock = new DistributedLock(ZK2_CONFIG, "test2");
                         lock.lock();
+                        Thread.sleep(100);
                         LOGGER.info("taskI: " + Thread.currentThread().getName() + " ,Thread ID: " + Thread.currentThread().getId() + " running");
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -65,5 +68,7 @@ public class ZkTest {
         }
 
         new ConcurrentTestTool(tasks);
+
+
     }
 }

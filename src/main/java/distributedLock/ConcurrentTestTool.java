@@ -59,6 +59,7 @@ public class ConcurrentTestTool {
         try {
             //等待所有线程都执行完毕
             doneSignal.await();
+            Thread.sleep(1000);
         } catch (InterruptedException e) {
             LOGGER.error("start wait error: ", e);
         }
