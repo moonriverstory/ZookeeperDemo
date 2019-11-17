@@ -20,7 +20,7 @@ public class ZKCuratorUtil {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ZKCuratorUtil.class);
 
-    private final static String CONNECTION_URL = "10.211.95.114:6830";
+    private final static String CONNECTION_URL = "106.14.5.254:2181";
 
     /**
      * 设置参数，获得连接客户端
@@ -50,34 +50,12 @@ public class ZKCuratorUtil {
     public static CuratorFramework getSingelDigestConnect(String url, String namespace, String user, String passwd) {
         //使用curator api，密码不需要加密，curator会在调用原生api的时候转为密文，省事=。=
         //创建权限管理器
-        ACLProvider aclProvider = new ACLProvider() {
-            private List<ACL> acl;
-
-            @Override
-            public List<ACL> getDefaultAcl() {
-                if (acl == null) {
-                    ArrayList<ACL> acl = ZooDefs.Ids.CREATOR_ALL_ACL; //初始化
-                    acl.clear();
-                    acl.add(new ACL(ZooDefs.Perms.ALL, new Id("auth", user + ":" + passwd)));//添加用户
-                    this.acl = acl;
-                }
-                return acl;
-            }
-
-            @Override
-            public List<ACL> getAclForPath(String path) {
-                return acl;
-            }
-        };
-
-        CuratorFramework curatorFramework =
-                CuratorFrameworkFactory.builder()
-                        .aclProvider(aclProvider)
-                        .connectString(url)
-                        .namespace(namespace)
-                        .authorization("digest", (user + ":" + passwd).getBytes()) //设置scheme digest授权
-                        .retryPolicy(new ExponentialBackoffRetry(1000, 5))  //重试策略
-                        .build();
+        CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
+                .connectString(url)
+                .namespace(namespace)
+                .authorization("digest", (user + ":" + passwd).getBytes()) //设置scheme digest授权
+                .retryPolicy(new ExponentialBackoffRetry(1000, 5))  //重试策略
+                .build();
         curatorFramework.start();
         return curatorFramework;
     }
@@ -264,9 +242,9 @@ public class ZKCuratorUtil {
             LOGGER.error("get path /dsf/super data error ", e);
         }
         try {
-        //读取 /dsf/super/testAclNode/testOne
-        byte[] pathAcl2 = client.getData().forPath("/dsf/super/testAclNode/testOne");
-        System.out.println("path /dsf/super/testAclNode/testOne data: " + new String(pathAcl2));
+            //读取 /dsf/super/testAclNode/testOne
+            byte[] pathAcl2 = client.getData().forPath("/dsf/super/testAclNode/testOne");
+            System.out.println("path /dsf/super/testAclNode/testOne data: " + new String(pathAcl2));
         } catch (Exception e) {
             LOGGER.error("get path /dsf/super/testAclNode/testOne data error ", e);
         }
@@ -276,72 +254,60 @@ public class ZKCuratorUtil {
         //很尴尬，没有授权的会话，也可以查询节点的acl。。。
         //这尼玛还有个屁安全性了，我先读取，再给连接授权，不就能读了
     }
+
     /**
-     2019-11-15 16:15:25,662 INFO  [main-SendThread(10.211.95.114:6830)] [ClientCnxn.java:852] : Socket connection established to 10.211.95.114/10.211.95.114:6830, initiating session
-     2019-11-15 16:15:25,702 INFO  [main-SendThread(10.211.95.114:6830)] [ClientCnxn.java:1235] : Session establishment complete on server 10.211.95.114/10.211.95.114:6830, sessionid = 0x16e43fc56a43ab8, negotiated timeout = 8000
-     2019-11-15 16:15:25,714 INFO  [main-EventThread] [ConnectionStateManager.java:251] : State change: CONNECTED
-     2019-11-15 16:15:25,726 ERROR [main] [ZKCuratorUtil.java:261] : get path /dsf/super data error
-     org.apache.zookeeper.KeeperException$NoAuthException: KeeperErrorCode = NoAuth for /dsf/super
-     at org.apache.zookeeper.KeeperException.create(KeeperException.java:113)
-     at org.apache.zookeeper.KeeperException.create(KeeperException.java:51)
-     at org.apache.zookeeper.ZooKeeper.getData(ZooKeeper.java:1155)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:327)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:316)
-     at org.apache.curator.connection.StandardConnectionHandlingPolicy.callWithRetry(StandardConnectionHandlingPolicy.java:64)
-     at org.apache.curator.RetryLoop.callWithRetry(RetryLoop.java:100)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl.pathInForeground(GetDataBuilderImpl.java:313)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:304)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:35)
-     at curator.ZKCuratorUtil.demoProcess4(ZKCuratorUtil.java:258)
-     at curator.ZKCuratorUtil.main(ZKCuratorUtil.java:291)
-     2019-11-15 16:15:25,737 ERROR [main] [ZKCuratorUtil.java:268] : get path /dsf/super/testAclNode/testOne data error
-     org.apache.zookeeper.KeeperException$NoAuthException: KeeperErrorCode = NoAuth for /dsf/super/testAclNode/testOne
-     at org.apache.zookeeper.KeeperException.create(KeeperException.java:113)
-     at org.apache.zookeeper.KeeperException.create(KeeperException.java:51)
-     at org.apache.zookeeper.ZooKeeper.getData(ZooKeeper.java:1155)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:327)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:316)
-     at org.apache.curator.connection.StandardConnectionHandlingPolicy.callWithRetry(StandardConnectionHandlingPolicy.java:64)
-     at org.apache.curator.RetryLoop.callWithRetry(RetryLoop.java:100)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl.pathInForeground(GetDataBuilderImpl.java:313)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:304)
-     at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:35)
-     at curator.ZKCuratorUtil.demoProcess4(ZKCuratorUtil.java:265)
-     at curator.ZKCuratorUtil.main(ZKCuratorUtil.java:291)
-     path /dsf/super/testAclNode/testOne acl: [31,s{'digest,'user1:123456a}
-     , 1,s{'digest,'user2:123456b}
-     , 12,s{'digest,'user2:123456b}
-     ]
+     * 2019-11-15 16:15:25,662 INFO  [main-SendThread(10.211.95.114:6830)] [ClientCnxn.java:852] : Socket connection established to 10.211.95.114/10.211.95.114:6830, initiating session
+     * 2019-11-15 16:15:25,702 INFO  [main-SendThread(10.211.95.114:6830)] [ClientCnxn.java:1235] : Session establishment complete on server 10.211.95.114/10.211.95.114:6830, sessionid = 0x16e43fc56a43ab8, negotiated timeout = 8000
+     * 2019-11-15 16:15:25,714 INFO  [main-EventThread] [ConnectionStateManager.java:251] : State change: CONNECTED
+     * 2019-11-15 16:15:25,726 ERROR [main] [ZKCuratorUtil.java:261] : get path /dsf/super data error
+     * org.apache.zookeeper.KeeperException$NoAuthException: KeeperErrorCode = NoAuth for /dsf/super
+     * at org.apache.zookeeper.KeeperException.create(KeeperException.java:113)
+     * at org.apache.zookeeper.KeeperException.create(KeeperException.java:51)
+     * at org.apache.zookeeper.ZooKeeper.getData(ZooKeeper.java:1155)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:327)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:316)
+     * at org.apache.curator.connection.StandardConnectionHandlingPolicy.callWithRetry(StandardConnectionHandlingPolicy.java:64)
+     * at org.apache.curator.RetryLoop.callWithRetry(RetryLoop.java:100)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl.pathInForeground(GetDataBuilderImpl.java:313)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:304)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:35)
+     * at curator.ZKCuratorUtil.demoProcess4(ZKCuratorUtil.java:258)
+     * at curator.ZKCuratorUtil.main(ZKCuratorUtil.java:291)
+     * 2019-11-15 16:15:25,737 ERROR [main] [ZKCuratorUtil.java:268] : get path /dsf/super/testAclNode/testOne data error
+     * org.apache.zookeeper.KeeperException$NoAuthException: KeeperErrorCode = NoAuth for /dsf/super/testAclNode/testOne
+     * at org.apache.zookeeper.KeeperException.create(KeeperException.java:113)
+     * at org.apache.zookeeper.KeeperException.create(KeeperException.java:51)
+     * at org.apache.zookeeper.ZooKeeper.getData(ZooKeeper.java:1155)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:327)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl$4.call(GetDataBuilderImpl.java:316)
+     * at org.apache.curator.connection.StandardConnectionHandlingPolicy.callWithRetry(StandardConnectionHandlingPolicy.java:64)
+     * at org.apache.curator.RetryLoop.callWithRetry(RetryLoop.java:100)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl.pathInForeground(GetDataBuilderImpl.java:313)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:304)
+     * at org.apache.curator.framework.imps.GetDataBuilderImpl.forPath(GetDataBuilderImpl.java:35)
+     * at curator.ZKCuratorUtil.demoProcess4(ZKCuratorUtil.java:265)
+     * at curator.ZKCuratorUtil.main(ZKCuratorUtil.java:291)
+     * path /dsf/super/testAclNode/testOne acl: [31,s{'digest,'user1:123456a}
+     * , 1,s{'digest,'user2:123456b}
+     * , 12,s{'digest,'user2:123456b}
+     * ]
      */
 
     public static void demoProcess5() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getSingelDigestConnect(CONNECTION_URL, "", "user1", "123456a");
+        CuratorFramework client = ZKCuratorUtil.getSingelDigestConnect(CONNECTION_URL, "", "admin", "RIcluWliVzL12y0nV2O1rx6dKLg=");
         //好神奇啊，用刚才查出来的用户名和密码建立授权链接，也无效Orz
 
-        try {
-            //读取 /dsf/super/testAclNode/testOne
-            byte[] pathAcl1 = client.getData().forPath("/dsf/super/testAclNode/testOne");
-            System.out.println("path /dsf/super/testAclNode/testOne data: " + new String(pathAcl1));
-        } catch (Exception e) {
-            LOGGER.error("get path /dsf/super/testAclNode/testOne data error ", e);
-        }
         //查询acl
-        List<ACL> acl = client.getACL().forPath("/dsf/super/testAclNode/testOne");
+        List<ACL> acl = client.getACL().forPath("/dsf/super/testAclNode");
         System.out.println("path /dsf/super/testAclNode/testOne acl: " + acl);
 
         //使用acl权限读
-        List<ACL> acls = new ArrayList<ACL>();
-        Id user1 = new Id("digest", "user1:123456a");
-        Id user2 = new Id("digest", "user2:123456b");
-        acls.add(new ACL(ZooDefs.Perms.ALL, user1));
-        acls.add(new ACL(ZooDefs.Perms.READ, user2));
-        acls.add(new ACL(ZooDefs.Perms.DELETE | ZooDefs.Perms.CREATE, user2));
         //byte[] pathAcl2 = client.getData().withACL(acls).forPath("/dsf/super/testAclNode/testOne");
         //这里不能使用withACL()方法，getData()返回的对象没有withACL()这个方法啊Orz
 
         try {
             //读取 /dsf/super/testAclNode/testOne
-            byte[] pathAcl2 = client.getData().forPath("/dsf/super/testAclNode/testOne");
+            byte[] pathAcl2 = client.getData().forPath("/dsf/super/testAclNode");
             System.out.println("path /dsf/super/testAclNode/testOne data: " + new String(pathAcl2));
         } catch (Exception e) {
             LOGGER.error("get path /dsf/super/testAclNode/testOne data error ", e);
