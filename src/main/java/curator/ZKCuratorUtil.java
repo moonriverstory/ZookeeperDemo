@@ -47,7 +47,7 @@ public class ZKCuratorUtil {
      * @param passwd
      * @return
      */
-    public static CuratorFramework getSingelDigestConnect(String url, String namespace, String user, String passwd) {
+    public static CuratorFramework getDigestConnect(String url, String namespace, String user, String passwd) {
         //使用curator api，密码不需要加密，curator会在调用原生api的时候转为密文，省事=。=
         //创建权限管理器
         CuratorFramework curatorFramework = CuratorFrameworkFactory.builder()
@@ -124,7 +124,7 @@ public class ZKCuratorUtil {
      * @throws Exception
      */
     public static void demoProcess2() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getSingelDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
+        CuratorFramework client = ZKCuratorUtil.getDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
 
         //2-------
         //读取 /
@@ -183,7 +183,7 @@ public class ZKCuratorUtil {
      * 创建acl节点
      */
     public static void demoProcess3() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getSingelDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
+        CuratorFramework client = ZKCuratorUtil.getDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
 
         String nodePath = "/super/testAclNode/testOne";
 
@@ -193,7 +193,6 @@ public class ZKCuratorUtil {
         Id user2 = new Id("digest", "user2:123456b");
         acls.add(new ACL(ZooDefs.Perms.ALL, user1));
         acls.add(new ACL(ZooDefs.Perms.READ, user2));
-        acls.add(new ACL(ZooDefs.Perms.DELETE | ZooDefs.Perms.CREATE, user2));
 
         // 创建节点，使用自定义权限列表来设置节点的acl权限
         byte[] nodeData = "child-data".getBytes();
@@ -294,7 +293,7 @@ public class ZKCuratorUtil {
      */
 
     public static void demoProcess5() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getSingelDigestConnect(CONNECTION_URL, "", "admin", "RIcluWliVzL12y0nV2O1rx6dKLg=");
+        CuratorFramework client = ZKCuratorUtil.getDigestConnect(CONNECTION_URL, "", "admin", "12345");
         //好神奇啊，用刚才查出来的用户名和密码建立授权链接，也无效Orz
 
         //查询acl
@@ -318,8 +317,8 @@ public class ZKCuratorUtil {
     public static void main(String[] args) throws Exception {
         //demoProcess1();
         //demoProcess2();
-        //demoProcess3();
+        demoProcess3();
         //demoProcess4();
-        demoProcess5();
+        //demoProcess5();
     }
 }
