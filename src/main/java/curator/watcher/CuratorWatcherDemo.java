@@ -72,7 +72,7 @@ public class CuratorWatcherDemo {
      */
 
     /**
-     *
+     * nodecache ： 监听某个特定节点，一次注册，反复触发
      */
     private static void demo2() {
         CuratorFramework client = ZKCuratorUtil.getRunningConnect(CONNECTION_URL);
@@ -113,7 +113,6 @@ public class CuratorWatcherDemo {
         }
         client.close();
     }
-
     /**
      * 2019-11-19 16:45:12,776 INFO  [main-SendThread(106.14.5.254:2181)] [ClientCnxn.java:1235] : Session establishment complete on server 106.14.5.254/106.14.5.254:2181, sessionid = 0x16c18dbb136006d, negotiated timeout = 5000
      * 2019-11-19 16:45:12,783 INFO  [main-EventThread] [ConnectionStateManager.java:251] : State change: CONNECTED
@@ -123,6 +122,9 @@ public class CuratorWatcherDemo {
      */
 
 
+    /**
+     * PathChildrenCache : 监听某个节点的子节点
+     */
     private static void demo3() {
         CuratorFramework client = ZKCuratorUtil.getRunningConnect(CONNECTION_URL);
         final String nodePath = "/access";
@@ -176,7 +178,6 @@ public class CuratorWatcherDemo {
         }
         client.close();
     }
-
     /**
      第一次运行demo3，还没有监视子节点，之前的创建节点事件居然保存了，我这次才触发的，还是每次运行都有？try~
 
@@ -190,17 +191,45 @@ public class CuratorWatcherDemo {
      子节点初始化 ok...
      */
     /**
-     的确在持续监听子节点的创建和修改
-
-     添加子节点:/access/id3
-     子节点数据:666
-     修改子节点路径:/access/id3
-     修改子节点数据:667
+     * 的确在持续监听子节点的创建和修改
+     * <p>
+     * 添加子节点:/access/id3
+     * 子节点数据:666
+     * 修改子节点路径:/access/id3
+     * 修改子节点数据:667
      */
+
+
+    private static void demo4() {
+        CuratorFramework client = ZKCuratorUtil.getRunningConnect(CONNECTION_URL);
+        final String nodePath = "/access";
+        // 添加 watcher
+        final TreeCache treeCache = new TreeCache(client, nodePath);
+
+        try {
+            treeCache.start();
+        } catch (Exception e) {
+            LOGGER.error("treeCache start error: ", e);
+        }
+
+        TreeCacheListener listener = (client1, event) ->
+                System.err.println("event type2 ：" + event.getType() + " | path ：" + (null != event.getData() ? event.getData().getPath() : null));
+
+        treeCache.getListenable().addListener(listener);
+
+        //暂停主线程，不退出
+        try {
+            Thread.sleep(300000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        client.close();
+    }
 
     public static void main(String[] args) {
         //demo1();
         //demo2();
-        demo3();
+        //demo3();
+        demo4();
     }
 }
