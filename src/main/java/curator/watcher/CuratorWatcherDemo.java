@@ -212,8 +212,8 @@ public class CuratorWatcherDemo {
             LOGGER.error("treeCache start error: ", e);
         }
 
-        TreeCacheListener listener = (client1, event) ->
-                System.err.println("event type2 ：" + event.getType() + " | path ：" + (null != event.getData() ? event.getData().getPath() : null));
+        TreeCacheListener listener = (c, event) ->
+                System.err.println("event type ：" + event.getType() + " | path ：" + (null != event.getData() ? event.getData().getPath() : null));
 
         treeCache.getListenable().addListener(listener);
 
