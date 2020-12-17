@@ -1,6 +1,6 @@
 package curator.watcher;
 
-import curator.ZKCuratorAclDemo;
+import curator.ZKCuratorSimDemo;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.cache.*;
 import org.apache.zookeeper.data.Stat;
@@ -18,7 +18,7 @@ public class CuratorWatcherDemo {
      * 如果想要多次触发，需要自己实现手动编写反复注册代码
      */
     private static void demo1() {
-        CuratorFramework client = ZKCuratorAclDemo.getRunningConnect(CONNECTION_URL);
+        CuratorFramework client = ZKCuratorSimDemo.getRunningConnect(CONNECTION_URL);
         // 判断节点是否存在,如果不存在则为空
         Stat statExist = null;
         try {
@@ -75,7 +75,7 @@ public class CuratorWatcherDemo {
      * nodecache ： 监听某个特定节点，一次注册，反复触发
      */
     private static void demo2() {
-        CuratorFramework client = ZKCuratorAclDemo.getRunningConnect(CONNECTION_URL);
+        CuratorFramework client = ZKCuratorSimDemo.getRunningConnect(CONNECTION_URL);
         final String nodePath = "/access";
         // 为节点添加 watcher
         // NodeCache: 监听数据节点的变更，会触发事件
@@ -126,7 +126,7 @@ public class CuratorWatcherDemo {
      * PathChildrenCache : 监听某个节点的子节点
      */
     private static void demo3() {
-        CuratorFramework client = ZKCuratorAclDemo.getRunningConnect(CONNECTION_URL);
+        CuratorFramework client = ZKCuratorSimDemo.getRunningConnect(CONNECTION_URL);
         final String nodePath = "/access";
         // 为子节点添加 watcher
         // PathChildrenCache: 监听数据节点的增删改，会触发事件
@@ -201,7 +201,7 @@ public class CuratorWatcherDemo {
 
 
     private static void demo4() {
-        CuratorFramework client = ZKCuratorAclDemo.getRunningConnect(CONNECTION_URL);
+        CuratorFramework client = ZKCuratorSimDemo.getRunningConnect(CONNECTION_URL);
         final String nodePath = "/access";
         // 添加 watcher
         final TreeCache treeCache = new TreeCache(client, nodePath);
