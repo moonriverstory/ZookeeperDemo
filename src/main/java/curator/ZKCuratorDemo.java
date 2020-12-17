@@ -3,7 +3,6 @@ package curator;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.api.ACLProvider;
 import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.ZooDefs;
@@ -16,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ZKCuratorUtil {
+public class ZKCuratorDemo {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ZKCuratorUtil.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ZKCuratorDemo.class);
 
     private final static String CONNECTION_URL = "106.14.5.254:2181";
 
@@ -64,7 +63,7 @@ public class ZKCuratorUtil {
      * 没有acl的简单demo流程
      */
     public static void demoProcess1() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getRunningConnect(CONNECTION_URL);
+        CuratorFramework client = ZKCuratorDemo.getRunningConnect(CONNECTION_URL);
 
         //读取 /
         byte[] pathRoot = client.getData().forPath("/");
@@ -124,7 +123,7 @@ public class ZKCuratorUtil {
      * @throws Exception
      */
     public static void demoProcess2() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
+        CuratorFramework client = ZKCuratorDemo.getDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
 
         //2-------
         //读取 /
@@ -183,7 +182,7 @@ public class ZKCuratorUtil {
      * 创建acl节点
      */
     public static void demoProcess3() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
+        CuratorFramework client = ZKCuratorDemo.getDigestConnect(CONNECTION_URL, "dsf", "admin", "12345");
 
         String nodePath = "/super/testAclNode/testOne";
 
@@ -232,7 +231,7 @@ public class ZKCuratorUtil {
      * 读取acl节点，没有权限的情况
      */
     public static void demoProcess4() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getRunningConnect(CONNECTION_URL);
+        CuratorFramework client = ZKCuratorDemo.getRunningConnect(CONNECTION_URL);
         try {
             //读取 /dsf/super
             byte[] pathAcl1 = client.getData().forPath("/dsf/super");
@@ -293,7 +292,7 @@ public class ZKCuratorUtil {
      */
 
     public static void demoProcess5() throws Exception {
-        CuratorFramework client = ZKCuratorUtil.getDigestConnect(CONNECTION_URL, "", "admin", "12345");
+        CuratorFramework client = ZKCuratorDemo.getDigestConnect(CONNECTION_URL, "", "admin", "12345");
         //好神奇啊，用刚才查出来的用户名和密码建立授权链接，也无效Orz
 
         //查询acl
